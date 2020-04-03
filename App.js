@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, StatusBar, Button, Dimensions, AsyncStorage } from 'react-native';
+import { StyleSheet, View, StatusBar, Alert, Dimensions, AsyncStorage } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -168,6 +168,17 @@ export default class App extends React.Component {
     }
   }
 
+  onRefreshButtonClicked() {
+    Alert.alert(
+      'Refresh data?',
+      'Refreshes all stops and transit data.',
+      [
+        {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+        {text: 'OK', onPress: () => this.refreshCachedData()},
+      ],
+      { cancelable: false }
+    )
+  }
   
   async onStopClicked(stop) {
     console.log("Stop Marker pressed", stop);
@@ -204,6 +215,7 @@ export default class App extends React.Component {
         predictionString = predictionString + ' |\n';
       }
     }
+    //TODO: This still shows two routes with the same title -- ie 72B and 72C North both show up at 72 North
     // console.log(prediction);
     // let splitPrediction = prediction.split('::');
     // let predictionString = 
@@ -276,7 +288,7 @@ export default class App extends React.Component {
           style={styles.refreshButtonViewStyle}
         >
           <IconButton
-            onPress={e => this.refreshCachedData(e)}
+            onPress={e => this.onRefreshButtonClicked(e)}
             name={"refresh"}
             backgroundColor={"#777777"}
             text={""}
