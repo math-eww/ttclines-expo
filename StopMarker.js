@@ -1,8 +1,7 @@
 import React from 'react';
-import { StyleSheet, View, Text, Dimensions } from 'react-native';
+import { StyleSheet, Text, Dimensions } from 'react-native';
 import MapView from 'react-native-maps';
 import stopIcon from './assets/stop.png';
-import StopCallout from './StopCallout';
 import StopPredictionText from './StopPredictionText'
 
 export default class StopMarker extends React.PureComponent {
@@ -10,8 +9,7 @@ export default class StopMarker extends React.PureComponent {
         super(props);
         // console.log("StopMarker constructor fired");
         this.state = {
-            prediction: "Loading estimates...",
-            calloutVisible: false
+            prediction: "Loading estimates..."
         };
     }
 
@@ -24,11 +22,6 @@ export default class StopMarker extends React.PureComponent {
     }
 
     redrawCallout() {
-        console.log("Redrawing callout");
-        // this.hideStopCallout();
-        // this.predictionText.refreshText();
-        // this.callout.forceUpdate();
-        // this.forceUpdate();
         this.showStopCallout();
         let timer = setTimeout(() => this.showStopCallout(), 1); //Unbelievable that this is the solution smh
         /**
@@ -66,7 +59,7 @@ export default class StopMarker extends React.PureComponent {
                 >
                     <Text style={styles.title}>{this.props.title}</Text>
                     <StopPredictionText 
-                        key={`'marker-callout-prediction-text-' + this.state.calloutVisible + this.props.stopId`}
+                        key={`'marker-callout-prediction-text-' + this.props.stopId`}
                         prediction={this.state.prediction}
                         ref={_predictionText => {
                             this.predictionText = _predictionText;

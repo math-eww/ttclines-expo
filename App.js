@@ -10,12 +10,6 @@ import stopIcon from './assets/stop.png';
 
 export default class App extends React.Component {
   state = {
-    mapInitialRegion: {
-      latitude: 43.6532,
-      longitude: -79.3832,
-      latitudeDelta: 0.00922,
-      longitudeDelta: 0.00421,
-    },
     mapRegion: {
       latitude: 43.6532,
       longitude: -79.3832,
@@ -152,23 +146,11 @@ export default class App extends React.Component {
 
   async updateDescriptionPredictionText(stop) {
     let prediction = await this.dataApi.loadPredictionString(stop);
-    // console.log(prediction);
     let stopClicked = this.stopMarkersOnMap[stop];
-    // console.log("stopClicked",stopClicked);
-    // stopClicked.setNativeProps({
-    //   description: prediction
-    // });
     stopClicked.setState({
-      prediction: prediction,
-      calloutVisible: true
+      prediction: prediction
     });
-    // console.log("Description on stopClicked", stopClicked.state.prediction);
     stopClicked.redrawCallout();
-    // stopClicked.hideStopCallout();
-    // stopClicked.showStopCallout();
-    // stopClicked.forceUpdate();
-    // stopClicked.hideCallout();
-    // stopClicked.showCallout();
   }
 
   render() {
@@ -182,6 +164,7 @@ export default class App extends React.Component {
           initialRegion={this.state.mapRegion}
           onRegionChangeComplete={this.handleMapRegionChangeComplete}
           showsUserLocation={true}
+          // showsMyLocationButton={true} // Doesn't work on android - see issues https://github.com/react-native-community/react-native-maps/issues/2010 https://github.com/react-native-community/react-native-maps/issues/1033
           customMapStyle={customStyle}
           ref={ _map => { this.map = _map }}
         >

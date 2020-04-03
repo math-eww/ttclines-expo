@@ -26,7 +26,10 @@
     "ios": {
       "bundleIdentifier": "info.mattsaunders.ttclines",
       "buildNumber": "1.0.0",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "config": {
+        "googleMapsApiKey": "SNIPPED"
+      }
     },
     "android": {
       "package": "info.mattsaunders.ttclines",

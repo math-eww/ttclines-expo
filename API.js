@@ -129,17 +129,10 @@ class API {
                 });
             }
             predictionString = predictionString + '\n';
-            // if (prediction['direction']) { 
-            //     console.log(prediction['direction']);
-            //     // predictionString = predictionString + ' ' + prediction['direction']['title'] + ' ';
-            //     prediction['direction']['prediction'].forEach(predictionTime => {
-            //         predictionString = predictionString + predictionTime['minutes'] + 'm | '
-            //     });
-            // }
         });
-        console.log("Built prediction string\n" + predictionString);
+        predictionString = predictionString.substring(0, predictionString.length - 2);
+        console.log("Built prediction string\n" + predictionString + '\n\n');
         return predictionString
-        // return "yes yes yes"
         //TODO: this needs some work still getting undefined errors sometimes -- fixed?
         //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
     }
