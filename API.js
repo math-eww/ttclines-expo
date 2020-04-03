@@ -136,6 +136,79 @@ class API {
         //TODO: this needs some work still getting undefined errors sometimes -- fixed?
         //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
     }
+
+    async getPredictionString(stop) {
+        let predictionResult = xmlparser.parse(await this.getPredictionForStop(stop), {
+            attributeNamePrefix : "",
+            ignoreAttributes : false,
+        })['body']['predictions'];
+        if (predictionResult === undefined) { return 'No predictions for this stop' }
+        if (!Array.isArray(predictionResult)) { predictionResult = [ predictionResult ]}
+        // console.log(JSON.stringify(predictionResult, null, 4));
+        let predictionString = '';
+        // let predictionsObject = {}; // { "dirTag": [prediction1, prediction2], "dirTag2": [prediction1, prediction2]}
+        predictionResult.sort((a, b) => parseInt(a.routeTag) - parseInt(b.routeTag));
+        predictionResult.forEach(prediction => {
+            if (prediction['direction']) {
+                if (!Array.isArray(prediction['direction'])) { prediction['direction'] = [ prediction['direction'] ]}
+                prediction['direction'].forEach(predictionDirection => {
+                    if (predictionDirection['prediction']) {
+                        if (!Array.isArray(predictionDirection['prediction'])) { predictionDirection['prediction'] = [ predictionDirection['prediction'] ]}
+                        let dirString = '';
+                        // predictionDirection['prediction'].sort((a, b) => a.dirTag.localeCompare(b.dirTag));
+                        // predictionDirection['prediction'].reverse();
+                        predictionDirection['prediction'].forEach(predictionTime => {
+                            if (dirString === '') { dirString = dirString + predictionTime['dirTag'] + '::' }
+                            dirString = dirString + ' | ' + predictionTime['minutes'] + 'm';
+                            // predictionsObject[predictionTime['dirTag']] = 
+                        });
+                        predictionString = predictionString + dirString + ' |\n';
+                    }
+                });
+            }
+        });
+        predictionString = predictionString.substring(0, predictionString.length - 1);
+        console.log("Built prediction string\n" + predictionString + '\n\n');
+        return predictionString
+        //TODO: this needs some work still getting undefined errors sometimes -- fixed?
+        //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
+    }
+
+
+    async getPredictionData(stop) {
+        let predictionResult = xmlparser.parse(await this.getPredictionForStop(stop), {
+            attributeNamePrefix : "",
+            ignoreAttributes : false,
+        })['body']['predictions'];
+        if (predictionResult === undefined) { return 'No predictions for this stop' }
+        if (!Array.isArray(predictionResult)) { predictionResult = [ predictionResult ]}
+        // console.log(JSON.stringify(predictionResult, null, 4));
+        let predictionsObject = {}; // { "route": { "dirTag": [prediction1, prediction2], "dirTag2": [prediction1, prediction2] }}
+        predictionResult.sort((a, b) => parseInt(a.routeTag) - parseInt(b.routeTag));
+        predictionResult.forEach(prediction => {
+            predictionsObject[prediction['routeTag']] = {};
+
+            if (prediction['direction']) {
+                if (!Array.isArray(prediction['direction'])) { prediction['direction'] = [ prediction['direction'] ]}
+
+                prediction['direction'].forEach(predictionDirection => {
+                    if (predictionDirection['prediction']) {
+                        if (!Array.isArray(predictionDirection['prediction'])) { predictionDirection['prediction'] = [ predictionDirection['prediction'] ]}
+
+                        predictionDirection['prediction'].forEach(predictionTime => {
+                            if (predictionsObject[prediction['routeTag']][predictionTime['dirTag']] === undefined) {
+                                predictionsObject[prediction['routeTag']][predictionTime['dirTag']] = [];
+                            }
+                            predictionsObject[prediction['routeTag']][predictionTime['dirTag']].push(predictionTime['minutes']); //Could assign entire predictionTime object here
+                        });
+                    }
+                });
+            }
+        });
+        return predictionsObject
+        //TODO: this needs some work still getting undefined errors sometimes -- fixed?
+        //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
+    }
 }
 
 module.exports = API;

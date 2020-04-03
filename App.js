@@ -40,7 +40,7 @@ export default class App extends React.Component {
       });
       let savedDirectionsData = await this.getCachedData("directionsData");
       if (savedDirectionsData != null) {
-        this.directionsData = JSON.parse(savedStopsData);
+        this.directionsData = JSON.parse(savedDirectionsData);
       }
     } else {
       this.refreshCachedData();
@@ -180,10 +180,39 @@ export default class App extends React.Component {
   }
 
   async updateDescriptionPredictionText(stop) {
-    let prediction = await this.dataApi.loadPredictionString(stop);
+    let predictions = await this.dataApi.getPredictionData(stop);
+    console.log(JSON.stringify(predictions, null, 4));
+    let predictionString = '';
+    for (route in predictions) {
+      // predictionString = predictionString + route + '\n';
+      for (subroute in predictions[route]) {
+        // console.log(JSON.stringify(this.directionsData[subroute], null, 4));
+        if (this.directionsData[subroute]) {
+          predictionString = predictionString + this.directionsData[subroute]['branch'] + ' ' +this.directionsData[subroute]['name'] + ': ';
+        } else {
+          let splitSubroute = subroute.split('_');
+          if (splitSubroute.length > 1) {
+            predictionString = predictionString + splitSubroute[2] + ': ';
+          } else {
+            predictionString = predictionString + subroute + ': ';
+          }
+        }
+        // predictionString = predictionString + subroute + ': ';
+        for (estimate in predictions[route][subroute]) {
+          predictionString = predictionString + ' | ' + predictions[route][subroute][estimate] + 'm'; 
+        }
+        predictionString = predictionString + ' |\n';
+      }
+    }
+    // console.log(prediction);
+    // let splitPrediction = prediction.split('::');
+    // let predictionString = 
+    //       this.directionsData[splitPrediction[0]]['branch'] + ' ' + //Route number
+    //       this.directionsData[splitPrediction[0]]['name'] + ' ' +   //Route direction
+    //       splitPrediction[1];                                       //Actual predictions
     let stopClicked = this.stopMarkersOnMap[stop];
     stopClicked.setState({
-      prediction: prediction
+      prediction: predictionString
     });
     stopClicked.redrawCallout();
   }
