@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "TTC Lines",
+    "slug": "ttclines",
+    "privacy": "public",
+    "sdkVersion": "36.0.0",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/ttclines-tiles.png",
+    "splash": {
+      "image": "./assets/ttclines-tiles.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#182080"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "bundleIdentifier": "info.mattsaunders.ttclines",
+      "buildNumber": "1.0.0",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "info.mattsaunders.ttclines",
+      "versionCode": 1,
+      "config": {
+        "googleMaps": {
+          "apiKey": "SNIPPED"
+        }
+      }
+    },
+    "description": "Dev version of TTC Lines"
+  }
+}
