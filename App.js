@@ -7,6 +7,7 @@ import * as Permissions from 'expo-permissions';
 import StopMarker from './StopMarker';
 const API = require('./API');
 import stopIcon from './assets/stop.png';
+import IconButton from './IconButton';
 
 export default class App extends React.Component {
   state = {
@@ -113,7 +114,7 @@ export default class App extends React.Component {
       //  let location = await Location.getCurrentPositionAsync({ enableHighAccuracy: true });
       let location = await Location.getCurrentPositionAsync({});
       // Center the map on the location we just fetched.
-      console.log("Centering map on user location");
+      console.log("Got first user location. Centering map on user...");
       this.setState({
         locationResult: JSON.stringify(location),
         mapRegion: {
@@ -128,10 +129,44 @@ export default class App extends React.Component {
       } else {
         setTimeout(() => {this.map.animateToRegion(this.state.mapRegion)}, 10);
       }
+      // Continually update user location
+      Location.watchPositionAsync({
+        accuracy: Location.Accuracy.Low,
+        timeInterval: 5000,
+      }, locationUpdate => {
+        this.setState({
+          locationResult: JSON.stringify(locationUpdate),
+        });
+      });
     } else {
       alert('Location permission not granted');
     }
   };
+
+  async centerOnUserLocation() {
+    console.log("Centering map on user location");
+    if (this.state.hasLocationPermissions) {
+      Location.getLastKnownPositionAsync().then(
+        location => {
+          this.setState({
+            locationResult: JSON.stringify(location),
+            mapRegion: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.00922,
+              longitudeDelta: 0.00421,
+            },
+          });
+          this.map.animateToRegion(this.state.mapRegion);
+        },
+        error => {
+          console.log(error);
+        }
+      )
+    } else {
+      alert('Location permission not granted');
+    }
+  }
 
   
   async onStopClicked(stop) {
@@ -207,16 +242,29 @@ export default class App extends React.Component {
           })
         }
         </MapView>
+
         <View
           style={styles.refreshButtonViewStyle}
         >
-          <Button
+          <IconButton
             onPress={e => this.refreshCachedData(e)}
-            title="🔄"
-            color="#777777"
-            accessibilityLabel="Refresh data"
-          />
-          
+            name={"refresh"}
+            backgroundColor={"#777777"}
+            text={""}
+            size={60}
+          ></IconButton>
+        </View>
+
+        <View
+          style={styles.myLocationButtonViewStyle}
+        >
+          <IconButton
+            onPress={e => this.centerOnUserLocation(e)}
+            name={"location-arrow"}
+            backgroundColor={"#777777"}
+            text={""}
+            size={60}
+          ></IconButton>
         </View>
       </View>
     );
@@ -238,9 +286,16 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 5,
     left: 5,
-    width: 40,
-    height: 40,
     alignSelf: 'flex-start',
+    zIndex: 10
+  },
+  myLocationButtonViewStyle: {
+    marginTop: Expo.Constants.statusBarHeight,
+    position: 'absolute',
+    // top: 5,
+    bottom: 5,
+    right: 5,
+    alignSelf: 'flex-end',
     zIndex: 10
   }
 });
