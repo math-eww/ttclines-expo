@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, StatusBar, Alert, Dimensions, AsyncStorage } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, StatusBar, Alert, Dimensions, AsyncStorage } from 'react-native';
 import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -36,7 +36,7 @@ export default class App extends React.Component {
       console.log("Loaded cached stops list");
       this.setState({ 
         stopsData: JSON.parse(savedStopsData),
-        isLoading: true, //Why does this work when set to true but not false like it should be? Clearly trying to render markers before the map bounds are set is causing an issue but wtf?
+        isLoading: false, //Why does this work when set to true but not false like it should be? Clearly trying to render markers before the map bounds are set is causing an issue but wtf?
       });
       let savedDirectionsData = await this.getCachedData("directionsData");
       if (savedDirectionsData != null) {
@@ -169,6 +169,9 @@ export default class App extends React.Component {
   }
 
   onRefreshButtonClicked() {
+    this.setState({
+      isLoading: true
+    })
     Alert.alert(
       'Refresh data?',
       'Refreshes all stops and transit data.',
@@ -215,6 +218,9 @@ export default class App extends React.Component {
         predictionString = predictionString + ' |\n';
       }
     }
+    if (predictionString === '') {
+      predictionString = 'No estimates for this stop';
+    }
     //TODO: This still shows two routes with the same title -- ie 72B and 72C North both show up at 72 North
     // console.log(prediction);
     // let splitPrediction = prediction.split('::');
@@ -246,7 +252,14 @@ export default class App extends React.Component {
         >
         {
           // If isLoading, return null, if zoom level is 13 or lower, return null
-          this.state.isLoading && !(this.state.zoomLevel > 13) ? null : 
+          // this.state.isLoading ? null :
+          // this.state.zoomLevel < 14 ? null :
+          // this.state.mapBoundaries === null ? null :
+          this.state.isLoading || this.state.zoomLevel < 14 || this.state.mapBoundaries === null ? null :
+          // if (this.state.isLoading || this.state.zoomLevel < 14 || this.state.mapBoundaries === null) {
+          //   null
+          // } else {
+          // this.state.isLoading && !(this.state.zoomLevel > 13) && (this.state.mapBoundaries === null) ? null : 
           // Else load a list of stopsData on the map
           Object.keys(this.state.stopsData).map((stopDataIndex) => {
             let stop = this.state.stopsData[stopDataIndex];
@@ -307,6 +320,12 @@ export default class App extends React.Component {
             size={60}
           ></IconButton>
         </View>
+        <ActivityIndicator 
+          size="large" 
+          animating={this.state.isLoading} 
+          color="#0000ff"
+          style={styles.loadingIndicator}
+        />
       </View>
     );
   }
@@ -337,6 +356,15 @@ const styles = StyleSheet.create({
     bottom: 5,
     right: 5,
     alignSelf: 'flex-end',
+    zIndex: 10
+  },
+  loadingIndicator: {
+    // marginTop: Expo.Constants.statusBarHeight,
+    position: 'absolute',
+    top: Dimensions.get('window').height/2,
+    // bottom: 5,
+    // right: 5,
+    alignSelf: 'center',
     zIndex: 10
   }
 });
