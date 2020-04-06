@@ -222,12 +222,6 @@ export default class App extends React.Component {
       predictionString = 'No estimates for this stop';
     }
     //TODO: This still shows two routes with the same title -- ie 72B and 72C North both show up at 72 North
-    // console.log(prediction);
-    // let splitPrediction = prediction.split('::');
-    // let predictionString = 
-    //       this.directionsData[splitPrediction[0]]['branch'] + ' ' + //Route number
-    //       this.directionsData[splitPrediction[0]]['name'] + ' ' +   //Route direction
-    //       splitPrediction[1];                                       //Actual predictions
     let stopClicked = this.stopMarkersOnMap[stop];
     stopClicked.setState({
       prediction: predictionString
@@ -237,7 +231,6 @@ export default class App extends React.Component {
 
   render() {
     Platform.OS === 'ios' ? StatusBar.setBarStyle('dark-content', true) : null;
-    // StatusBar.setTranslucent(true);
     return (
       <View style={styles.container}>
         <MapView
@@ -251,15 +244,8 @@ export default class App extends React.Component {
           ref={ _map => { this.map = _map }}
         >
         {
-          // If isLoading, return null, if zoom level is 13 or lower, return null
-          // this.state.isLoading ? null :
-          // this.state.zoomLevel < 14 ? null :
-          // this.state.mapBoundaries === null ? null :
+          // If isLoading,  if zoom level is 13 or lower, or if mapBoundaries is null, return null
           this.state.isLoading || this.state.zoomLevel < 14 || this.state.mapBoundaries === null ? null :
-          // if (this.state.isLoading || this.state.zoomLevel < 14 || this.state.mapBoundaries === null) {
-          //   null
-          // } else {
-          // this.state.isLoading && !(this.state.zoomLevel > 13) && (this.state.mapBoundaries === null) ? null : 
           // Else load a list of stopsData on the map
           Object.keys(this.state.stopsData).map((stopDataIndex) => {
             let stop = this.state.stopsData[stopDataIndex];

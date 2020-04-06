@@ -9,7 +9,7 @@ class API {
         this.agencyString = '&a=ttc';
         this.routeIdString = '';
         this.stopIdString = '';
-        this.timeString = '';
+        this.timeString = '&t=0';
         this.command = '';
 
         this.requestUrlString = '';
@@ -102,79 +102,6 @@ class API {
         }
     }
 
-    async loadPredictionString(stop) {
-        let predictionResult = xmlparser.parse(await this.getPredictionForStop(stop), {
-            attributeNamePrefix : "",
-            ignoreAttributes : false,
-        })['body']['predictions'];
-        if (predictionResult === undefined) { return 'No predictions for this stop' }
-        if (!Array.isArray(predictionResult)) { predictionResult = [ predictionResult ]}
-        // console.log(JSON.stringify(predictionResult, null, 4));
-        let predictionString = '';
-        predictionResult.sort((a, b) => parseInt(a.routeTag) - parseInt(b.routeTag));
-        predictionResult.forEach(prediction => {
-            predictionString = predictionString + prediction['routeTag'] + ': ';
-            if (prediction['direction']) {
-                if (!Array.isArray(prediction['direction'])) { prediction['direction'] = [ prediction['direction'] ]}
-                // console.log(prediction['direction']);
-                prediction['direction'].forEach(predictionDirection => {
-                    // console.log(predictionDirection);
-                    // predictionString = predictionString + ' ' + predictionDirection['title'] + ' ';
-                    if (predictionDirection['prediction']) {
-                        if (!Array.isArray(predictionDirection['prediction'])) { predictionDirection['prediction'] = [ predictionDirection['prediction'] ]}
-                        predictionDirection['prediction'].forEach(predictionTime => {
-                            predictionString = predictionString + predictionTime['minutes'] + 'm | '
-                        });
-                    }
-                });
-            }
-            predictionString = predictionString + '\n';
-        });
-        predictionString = predictionString.substring(0, predictionString.length - 2);
-        console.log("Built prediction string\n" + predictionString + '\n\n');
-        return predictionString
-        //TODO: this needs some work still getting undefined errors sometimes -- fixed?
-        //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
-    }
-
-    async getPredictionString(stop) {
-        let predictionResult = xmlparser.parse(await this.getPredictionForStop(stop), {
-            attributeNamePrefix : "",
-            ignoreAttributes : false,
-        })['body']['predictions'];
-        if (predictionResult === undefined) { return 'No predictions for this stop' }
-        if (!Array.isArray(predictionResult)) { predictionResult = [ predictionResult ]}
-        // console.log(JSON.stringify(predictionResult, null, 4));
-        let predictionString = '';
-        // let predictionsObject = {}; // { "dirTag": [prediction1, prediction2], "dirTag2": [prediction1, prediction2]}
-        predictionResult.sort((a, b) => parseInt(a.routeTag) - parseInt(b.routeTag));
-        predictionResult.forEach(prediction => {
-            if (prediction['direction']) {
-                if (!Array.isArray(prediction['direction'])) { prediction['direction'] = [ prediction['direction'] ]}
-                prediction['direction'].forEach(predictionDirection => {
-                    if (predictionDirection['prediction']) {
-                        if (!Array.isArray(predictionDirection['prediction'])) { predictionDirection['prediction'] = [ predictionDirection['prediction'] ]}
-                        let dirString = '';
-                        // predictionDirection['prediction'].sort((a, b) => a.dirTag.localeCompare(b.dirTag));
-                        // predictionDirection['prediction'].reverse();
-                        predictionDirection['prediction'].forEach(predictionTime => {
-                            if (dirString === '') { dirString = dirString + predictionTime['dirTag'] + '::' }
-                            dirString = dirString + ' | ' + predictionTime['minutes'] + 'm';
-                            // predictionsObject[predictionTime['dirTag']] = 
-                        });
-                        predictionString = predictionString + dirString + ' |\n';
-                    }
-                });
-            }
-        });
-        predictionString = predictionString.substring(0, predictionString.length - 1);
-        console.log("Built prediction string\n" + predictionString + '\n\n');
-        return predictionString
-        //TODO: this needs some work still getting undefined errors sometimes -- fixed?
-        //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
-    }
-
-
     async getPredictionData(stop) {
         let predictionResult = xmlparser.parse(await this.getPredictionForStop(stop), {
             attributeNamePrefix : "",
@@ -206,8 +133,33 @@ class API {
             }
         });
         return predictionsObject
-        //TODO: this needs some work still getting undefined errors sometimes -- fixed?
-        //TODO: change to send direction data (dirTag) and parse actual sub-route title from it and directionsData in App.js
+        //TODO: test all stops
+    }
+
+    async getVehicleLocations() {
+        // console.log("Refreshing routes list");
+        //http://webservices.nextbus.com/service/publicXMLFeed?command=vehicleLocations&a=ttc&t=<epoch time in msec></epoch>
+        this.command = 'vehicleLocations';
+        this.requestUrlString = this.baseRequestUrl + this.command + this.agencyString + this.timeString;
+        try {
+            const response = await axios.get(this.requestUrlString);
+            // console.log(response.data);
+            return response.data;
+        } catch (error) {
+            console.log("API request error in getVehicleLocations", error);
+        }
+    }
+
+    async getVehicleLocationData() {
+        let vehicleLocationsResult = xmlparser.parse(await this.getVehicleLocations(), {
+            attributeNamePrefix : "",
+            ignoreAttributes : false,
+        })['body'];
+        if (vehicleLocationsResult === undefined) { return 'Unable to load vehicle locations' }
+        // console.log(JSON.stringify(vehicleLocationsResult['vehicle'], null, 4));
+        // console.log(vehicleLocationsResult['lastTime']['time']);
+        this.timeString = '&t=' + vehicleLocationsResult['lastTime']['time'];
+        return vehicleLocationsResult['vehicle'];
     }
 }
 
