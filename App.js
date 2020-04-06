@@ -7,6 +7,7 @@ import * as Permissions from 'expo-permissions';
 import StopMarker from './StopMarker';
 const API = require('./API');
 import stopIcon from './assets/stop.png';
+import vehicleIcon from './assets/bus.png';
 import IconButton from './IconButton';
 
 export default class App extends React.Component {
@@ -23,10 +24,12 @@ export default class App extends React.Component {
     locationResult: null,
     isLoading: true,
     stopsData: [],
+    vehiclesData: [],
   };
 
   dataApi = new API();
   stopMarkersOnMap = {};
+  vehicleMarkersOnMap = {};
   map = null;
 
 
@@ -84,9 +87,46 @@ export default class App extends React.Component {
     }
   }
 
-  async componentDidMount() {
+  componentDidMount() {
     this.getLocationAsync();
     this.fetchMarkerData();
+    this._vehicleUpdateInterval = setInterval(async () => this.updateVehiclesData(), 5000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._vehicleUpdateInterval);
+  }
+
+  async updateVehiclesData() {
+    // Get vehicles data and build new vehicles object
+    let vehicles = await this.dataApi.getVehicleLocationData();
+    let updatedVehiclesObject = this.state.vehiclesData;
+    Object.assign(updatedVehiclesObject, vehicles.reduce((obj, item) => {
+      obj[item.id] = item
+      return obj
+    }, {}));
+    // Animate vehicles to new position
+    // Object.keys(this.vehicleMarkersOnMap).map((vehicleKey) => {
+    //   if (this.state.vehiclesData[vehicleKey] && updatedVehiclesObject[vehicleKey]) {
+    //     //Perform animation
+    //     let newCoordinate = {
+    //       latitude: parseFloat(updatedVehiclesObject[vehicleKey].lat),
+    //       longitude: parseFloat(updatedVehiclesObject[vehicleKey].lon),
+    //     };
+    //     if (Platform.OS === 'android') {
+    //       // console.log(this.vehicleMarkersOnMap[vehicleKey]._component);
+    //       this.vehicleMarkersOnMap[vehicleKey]._component.animateMarkerToCoordinate(newCoordinate, 500);
+    //     } else {
+    //       coordinate.timing(newCoordinate).start();
+    //     }
+    //   }
+    // })
+    // vehicles.map((vehicle) => {});
+    this.setState({
+      vehiclesData: updatedVehiclesObject
+    });
+    // console.log(Object.keys(this.state.vehiclesData).length);
+    //TODO handle vehicle moving out of map
   }
 
   handleMapRegionChangeComplete = newMapRegion => {
@@ -195,7 +235,7 @@ export default class App extends React.Component {
 
   async updateDescriptionPredictionText(stop) {
     let predictions = await this.dataApi.getPredictionData(stop);
-    console.log(JSON.stringify(predictions, null, 4));
+    // console.log(JSON.stringify(predictions, null, 4));
     let predictionString = '';
     for (route in predictions) {
       // predictionString = predictionString + route + '\n';
@@ -258,26 +298,64 @@ export default class App extends React.Component {
                 latitude: stop.lat,
                 longitude: stop.lon,
               };
-              const stopMarkerToAdd = 
-              <StopMarker
-                  key={stop.stopId}
-                  dataIndex={stopDataIndex}
-                  title={stop.title}
-                  description={"Loading predictions..."}
-                  stopId={stop.stopId}
-                  coordinate={coords}
-                  onPress={() => this.onStopClicked(stop.stopId, stopDataIndex)}
-                  onCalloutPress={() => this.onPredictionClicked(stop.stopId, stopDataIndex)}
-                  ref={ref => {
-                    this.stopMarkersOnMap[stop.stopId] = ref;
-                  }}
-                  flat={true}
-                  icon={stopIcon}
-                  >
-              </StopMarker>
               return (
-                stopMarkerToAdd
-              );
+                <StopMarker
+                    key={stop.stopId}
+                    dataIndex={stopDataIndex}
+                    title={stop.title}
+                    description={"Loading predictions..."}
+                    stopId={stop.stopId}
+                    coordinate={coords}
+                    onPress={() => this.onStopClicked(stop.stopId, stopDataIndex)}
+                    onCalloutPress={() => this.onPredictionClicked(stop.stopId, stopDataIndex)}
+                    ref={ref => {
+                      this.stopMarkersOnMap[stop.stopId] = ref;
+                    }}
+                    flat={true}
+                    icon={stopIcon}
+                    >
+                </StopMarker>
+              )
+            }
+          })
+        }
+        {
+          // If isLoading,  if zoom level is 13 or lower, or if mapBoundaries is null, return null
+          this.state.isLoading || this.state.zoomLevel < 14 || this.state.mapBoundaries === null ? null :
+          // Else load a list of stopsData on the map
+          Object.keys(this.state.vehiclesData).map((vehicleDataIndex) => {
+            let vehicle = this.state.vehiclesData[vehicleDataIndex];
+            //Check if within bounds
+            if (vehicle.lat > this.state.mapBoundaries[1] && //greater than min latitude
+                  (vehicle.lat < this.state.mapBoundaries[3]) && //less than max latitude
+                  (vehicle.lon > this.state.mapBoundaries[0]) &&
+                  (vehicle.lon < this.state.mapBoundaries[2])) {
+              const coords = {
+                latitude: parseFloat(vehicle.lat),
+                longitude: parseFloat(vehicle.lon),
+              };
+              let title = vehicle.routeTag;
+              // console.log(title)
+              if (this.directionsData[vehicle.dirTag]) {
+                title = this.directionsData[vehicle.dirTag]['title'];
+              }
+              let description = vehicle.id + ': ' + vehicle.secsSinceReport + ' seconds since last report';
+              return (
+                <MapView.Marker.Animated
+                  key={'vehicle' + vehicle.id}
+                  title={title}
+                  description={description}
+                  vehicleId={vehicle.id}
+                  coordinate={coords}
+                  // onPress={this.props.onPress}
+                  // onCalloutPress={this.props.onCalloutPress}
+                  flat={true}
+                  icon={vehicleIcon}
+                  ref={ref => {
+                    this.vehicleMarkersOnMap[vehicle.id] = ref;
+                  }}
+                ></MapView.Marker.Animated>
+              )
             }
           })
         }
