@@ -13,7 +13,7 @@
     "orientation": "portrait",
     "icon": "./assets/ttclines-tiles.png",
     "splash": {
-      "image": "./assets/ttclines-tiles.png",
+      "image": "./assets/splash-text.png",
       "resizeMode": "contain",
       "backgroundColor": "#182080"
     },
