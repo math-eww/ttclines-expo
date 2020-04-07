@@ -5,10 +5,9 @@ import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
 
 import StopMarker from './StopMarker';
-const API = require('./API');
-import stopIcon from './assets/stop.png';
-import vehicleIcon from './assets/bus.png';
+import VehicleMarker from './VehicleMarker';
 import IconButton from './IconButton';
+const API = require('./API');
 
 export default class App extends React.Component {
   state = {
@@ -32,6 +31,16 @@ export default class App extends React.Component {
   vehicleMarkersOnMap = {};
   map = null;
 
+  
+  componentDidMount() {
+    this.getLocationAsync();
+    this.fetchMarkerData();
+    this._vehicleUpdateInterval = setInterval(async () => this.updateVehiclesData(), 5000);
+  }
+
+  componentWillUnmount() {
+    clearInterval(this._vehicleUpdateInterval);
+  }
 
   async fetchMarkerData() {
     let savedStopsData = await this.getCachedData("stopsCache");
@@ -87,41 +96,30 @@ export default class App extends React.Component {
     }
   }
 
-  componentDidMount() {
-    this.getLocationAsync();
-    this.fetchMarkerData();
-    this._vehicleUpdateInterval = setInterval(async () => this.updateVehiclesData(), 5000);
-  }
-
-  componentWillUnmount() {
-    clearInterval(this._vehicleUpdateInterval);
-  }
-
   async updateVehiclesData() {
     // Get vehicles data and build new vehicles object
     let vehicles = await this.dataApi.getVehicleLocationData();
+    if (vehicles === undefined || vehicles === null || vehicles.length < 1) { return null }
     let updatedVehiclesObject = this.state.vehiclesData;
     Object.assign(updatedVehiclesObject, vehicles.reduce((obj, item) => {
       obj[item.id] = item
       return obj
     }, {}));
     // Animate vehicles to new position
-    // Object.keys(this.vehicleMarkersOnMap).map((vehicleKey) => {
-    //   if (this.state.vehiclesData[vehicleKey] && updatedVehiclesObject[vehicleKey]) {
-    //     //Perform animation
-    //     let newCoordinate = {
-    //       latitude: parseFloat(updatedVehiclesObject[vehicleKey].lat),
-    //       longitude: parseFloat(updatedVehiclesObject[vehicleKey].lon),
-    //     };
-    //     if (Platform.OS === 'android') {
-    //       // console.log(this.vehicleMarkersOnMap[vehicleKey]._component);
-    //       this.vehicleMarkersOnMap[vehicleKey]._component.animateMarkerToCoordinate(newCoordinate, 500);
-    //     } else {
-    //       coordinate.timing(newCoordinate).start();
-    //     }
-    //   }
-    // })
-    // vehicles.map((vehicle) => {});
+    Object.keys(this.vehicleMarkersOnMap).map((vehicleKey) => {
+      if (this.vehicleMarkersOnMap[vehicleKey] === null) {
+        delete this.vehicleMarkersOnMap[vehicleKey]
+      } else {
+        if (this.state.vehiclesData[vehicleKey] && updatedVehiclesObject[vehicleKey]) {
+          //Perform animation
+          let newCoordinate = {
+            latitude: parseFloat(updatedVehiclesObject[vehicleKey].lat),
+            longitude: parseFloat(updatedVehiclesObject[vehicleKey].lon),
+          };
+          this.vehicleMarkersOnMap[vehicleKey].animateToNewCoordinate(newCoordinate);
+        }
+      }
+    });
     this.setState({
       vehiclesData: updatedVehiclesObject
     });
@@ -311,8 +309,6 @@ export default class App extends React.Component {
                     ref={ref => {
                       this.stopMarkersOnMap[stop.stopId] = ref;
                     }}
-                    flat={true}
-                    icon={stopIcon}
                     >
                 </StopMarker>
               )
@@ -341,7 +337,8 @@ export default class App extends React.Component {
               }
               let description = vehicle.id + ': ' + vehicle.secsSinceReport + ' seconds since last report';
               return (
-                <MapView.Marker.Animated
+                // <MapView.Marker.Animated
+                <VehicleMarker
                   key={'vehicle' + vehicle.id}
                   title={title}
                   description={description}
@@ -349,12 +346,13 @@ export default class App extends React.Component {
                   coordinate={coords}
                   // onPress={this.props.onPress}
                   // onCalloutPress={this.props.onCalloutPress}
-                  flat={true}
-                  icon={vehicleIcon}
+                  // flat={true}
+                  // icon={vehicleIcon}
                   ref={ref => {
                     this.vehicleMarkersOnMap[vehicle.id] = ref;
                   }}
-                ></MapView.Marker.Animated>
+                ></VehicleMarker>
+                // ></MapView.Marker.Animated>
               )
             }
           })
