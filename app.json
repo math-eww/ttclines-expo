@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "TTC Lines",
+    "description": "TTC Lines is for quickly getting time estimates for surface route stops, and tracking surface vehicles, of the Toronto Transit Commission",
     "slug": "ttclines",
     "privacy": "public",
     "sdkVersion": "36.0.0",
@@ -9,7 +10,7 @@
       "android",
       "web"
     ],
-    "version": "1.0.0",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/ttclines-tiles.png",
     "splash": {
@@ -17,6 +18,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#182080"
     },
+    "primaryColor": "#182080",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
@@ -25,21 +27,29 @@
     ],
     "ios": {
       "bundleIdentifier": "info.mattsaunders.ttclines",
-      "buildNumber": "1.0.0",
+      "buildNumber": "1.0.2",
       "supportsTablet": true,
+      "icon": "./assets/icons/ttclines-icon-1024-tilesonly.png",
       "config": {
         "googleMapsApiKey": "SNIPPED"
       }
     },
     "android": {
       "package": "info.mattsaunders.ttclines",
-      "versionCode": 1,
+      "versionCode": 3,
       "config": {
         "googleMaps": {
           "apiKey": "SNIPPED"
         }
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ],
+      "adaptiveIcon": {
+        "backgroundImage": "./assets/icons/ttclines-icon-1024-tilesonly-bg.png",
+        "foregroundImage": "./assets/icons/ttclines-icon-1024-tilesonly-fg.png"
       }
-    },
-    "description": "Dev version of TTC Lines"
+    }
   }
 }

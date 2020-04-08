@@ -279,6 +279,7 @@ export default class App extends React.Component {
           showsUserLocation={true}
           // showsMyLocationButton={true} // Doesn't work on android - see issues https://github.com/react-native-community/react-native-maps/issues/2010 https://github.com/react-native-community/react-native-maps/issues/1033
           customMapStyle={customStyle}
+          compassEnabled={false}
           ref={ _map => { this.map = _map }}
         >
         {
